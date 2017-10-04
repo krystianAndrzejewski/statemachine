@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StateMachine", "StateMachine\StateMachine.vcxproj", "{1F612C10-8914-45A8-8930-92F94034444A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RegularExpression", "RegularExpression\RegularExpression.vcxproj", "{10F46227-444F-48ED-B853-A51FEEF187C1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1F612C10-8914-45A8-8930-92F94034444A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1F612C10-8914-45A8-8930-92F94034444A}.Debug|Win32.Build.0 = Debug|Win32
+		{1F612C10-8914-45A8-8930-92F94034444A}.Release|Win32.ActiveCfg = Release|Win32
+		{1F612C10-8914-45A8-8930-92F94034444A}.Release|Win32.Build.0 = Release|Win32
+		{10F46227-444F-48ED-B853-A51FEEF187C1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{10F46227-444F-48ED-B853-A51FEEF187C1}.Debug|Win32.Build.0 = Debug|Win32
+		{10F46227-444F-48ED-B853-A51FEEF187C1}.Release|Win32.ActiveCfg = Release|Win32
+		{10F46227-444F-48ED-B853-A51FEEF187C1}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
