@@ -97,7 +97,7 @@ bool Regex::processUsingInvertedDfa(
     auto finalStates = invertedAutomata.getFinalStates();
     std::size_t actualState = invertedAutomata.getActualState();
     invertedStates.push_back(actualState);
-    for (std::size_t i = lastFinalState; i >= lastInitialState; i--)
+    for (int i = (int)lastFinalState; i >= (int)lastInitialState; i--)
     {
         if (!invertedAutomata.returnNextState(input[i], actualState))
         {

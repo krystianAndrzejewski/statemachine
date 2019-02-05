@@ -215,6 +215,7 @@ void InitialDFA::getGroups(std::map<std::size_t, std::size_t> &groups) const
     groups.clear();
     std::stack<std::size_t> statesStack;
     std::vector<bool> flags;
+	std::vector<std::size_t> exitStates;
     State::StateType type;
     statesStack.push(initialState);
     flags.resize(states.size());
@@ -229,6 +230,7 @@ void InitialDFA::getGroups(std::map<std::size_t, std::size_t> &groups) const
             switch (type)
             {
             case State::Entry:
+				exitStates.push_back(mapStates.at(static_cast<DeterministicState*>(states[processedState])->getConnectedState()));
                 groups[mapStates.at(static_cast<DeterministicState*>(states[processedState])->getConnectedState())] = actualGroup;
                 groups[processedState] = actualGroup;
                 actualGroup++;
@@ -253,6 +255,11 @@ void InitialDFA::getGroups(std::map<std::size_t, std::size_t> &groups) const
         }
         flags[processedState] = true;
     } while (!statesStack.empty());
+
+	for (auto stateID : exitStates)
+	{
+		groups[stateID] = exitStates.size() + groups[stateID];
+	}
 }
 
 std::size_t InitialDFA::getNumberOfGroups() const

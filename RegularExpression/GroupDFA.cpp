@@ -143,7 +143,7 @@ void GroupDFA::createGroupDfa(const InitialDFA& initialDfa, RegularDFA &regualar
                 statesStack.push(nextStates[' '].first);
                 break;
             case State::Exit:
-                group.push_back(groupsMap[actualState] + groupsMap.size());
+                group.push_back(groupsMap[actualState]);
                 statesStack.push(nextStates[' '].first);
                 break;
             default:
@@ -259,12 +259,13 @@ bool GroupDFA::returnNextState(
     std::size_t &nextStateNumber,
     std::vector<std::size_t> &groupNumbers)
 {
+	groupNumbers.clear();
     auto nextStates = states[actualState]->getNextStates();
     if (!nextStates.empty() && nextStates.find(action) != nextStates.end())
     {
         nextStateNumber = mapStates[nextStates[action].first];
         actualState = nextStateNumber;
-        std::copy(nextStates[action].second.begin(), nextStates[action].second.end(), std::back_inserter(groupNumbers));
+		std::copy(nextStates[action].second.begin(), nextStates[action].second.end(), std::back_inserter(groupNumbers));
         return true;
     }
     else
