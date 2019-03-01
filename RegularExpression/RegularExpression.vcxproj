@@ -64,10 +64,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BaseRegexImpl.cpp" />
     <ClCompile Include="DeterministicState.cpp" />
     <ClCompile Include="GroupDFA.cpp" />
     <ClCompile Include="GroupState.cpp" />
     <ClCompile Include="InitialDFA.cpp" />
+    <ClCompile Include="Lexer.cpp" />
+    <ClCompile Include="LexerAST.cpp" />
+    <ClCompile Include="LexerMatch.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NFA.cpp" />
     <ClCompile Include="NodeAST.cpp" />
@@ -78,10 +82,14 @@
     <ClCompile Include="State.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseRegexImpl.h" />
     <ClInclude Include="DeterministicState.h" />
     <ClInclude Include="GroupDFA.h" />
     <ClInclude Include="GroupState.h" />
     <ClInclude Include="InitialDFA.h" />
+    <ClInclude Include="Lexer.h" />
+    <ClInclude Include="LexerAST.h" />
+    <ClInclude Include="LexerMatch.h" />
     <ClInclude Include="NFA.h" />
     <ClInclude Include="NodeAST.h" />
     <ClInclude Include="Regex.h" />

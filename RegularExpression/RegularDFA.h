@@ -32,7 +32,7 @@ private:
     std::vector<State *> states;
     std::unordered_map<const State *, std::size_t> mapStates;
     std::unordered_map<const State *, std::set<std::size_t>> mapNFAStates;
-    std::map<std::set<std::size_t>, const State *> mapRDFAfromNFAStates;
+    std::map<std::set<std::size_t>, State *> mapRDFAfromNFAStates;
     std::unordered_map<std::size_t, std::set<std::set<std::size_t>>> mapConnectedNFAStates;
     std::unordered_set<std::size_t> finalStates;
     std::size_t initialState;

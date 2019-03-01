@@ -17,7 +17,8 @@ const std::map<RegexAST::TypeOperator, std::size_t> RegexAST::operatorPrority = 
 
 RegexAST::RegexAST(const std::string &regex) : pattern(regex), greedyRegex(true)
 {
-    compile();
+	escapeSign = "\\()+*?|[]";
+    compile(nodes);
 }
 
 
@@ -33,7 +34,6 @@ void RegexAST::print(std::string &output)
 {
     std::size_t i = 0;
     std::stringstream stream;
-    std::string intend = "    ";
     stream << "A abstract tree state of the regular expression.\n\n";
     stream << "Input pattern: " << pattern << "\n\n";
     std::size_t operandNumber = 0;
@@ -107,12 +107,12 @@ bool RegexAST::createAutomatas(
     return false;
 }
 
-void RegexAST::compile()
+bool RegexAST::compile(std::vector<NodeAST *> &pNodes)
 {
     bool success = createPostfixRepresentation();
     if (success)
     {
-        success = createASTtree();
+        success = createASTtree(pNodes);
     }
     if (!success)
     {
@@ -122,9 +122,10 @@ void RegexAST::compile()
         }
         nodes.clear();
     }
+	return success;
 }
 
-bool RegexAST::createASTtree()
+bool RegexAST::createASTtree(std::vector<NodeAST *> &pNodes)
 {
     std::size_t operandNumber = 0;
     std::stack<std::size_t> stackOp;
@@ -176,35 +177,35 @@ bool RegexAST::createASTtree()
         switch (operators[i])
         {
         case transition:
-            nodes.push_back(new TransitionNodeAST(result[operandNumber]));
+			pNodes.push_back(new TransitionNodeAST(result[operandNumber]));
             operandNumber++;
             break;
         case concatenation:
-            nodes.push_back(new ConcatenationNodeAST(nodes[args[1]], nodes[args[0]]));
+			pNodes.push_back(new ConcatenationNodeAST(pNodes[args[1]], pNodes[args[0]]));
             break;
         case alternative:
-            nodes.push_back(new AlternativeNodeAST(nodes[args[1]], nodes[args[0]]));
-            greedyRegex = false;
+			pNodes.push_back(new AlternativeNodeAST(pNodes[args[1]], pNodes[args[0]]));
+			greedyRegex = false;
             break;
         case lazyRepeation:
-            nodes.push_back(new LazyRepeatitionNodeAST(nodes[args[0]]));
+			pNodes.push_back(new LazyRepeatitionNodeAST(pNodes[args[0]]));
             greedyRegex = false;
             break;
         case lazyRepeationPlus:
-            nodes.push_back(new LazyRepeatitionPlusNodeAST(nodes[args[0]]));
+			pNodes.push_back(new LazyRepeatitionPlusNodeAST(pNodes[args[0]]));
             greedyRegex = false;
             break;
         case greedyRepeation:
-            nodes.push_back(new GreedyRepeatitionNodeAST(nodes[args[0]]));
+			pNodes.push_back(new GreedyRepeatitionNodeAST(pNodes[args[0]]));
             break;
         case greedyRepeationPlus:
-            nodes.push_back(new GreedyRepeatitionPlusNodeAST(nodes[args[0]]));
+			pNodes.push_back(new GreedyRepeatitionPlusNodeAST(pNodes[args[0]]));
             break;
         case zeroOrOne:
-            nodes.push_back(new ZeroOrOneNodeAST(nodes[args[0]]));
+			pNodes.push_back(new ZeroOrOneNodeAST(pNodes[args[0]]));
             break;
         case group:
-            nodes.push_back(new GroupNodeAST(nodes[args[0]]));
+			pNodes.push_back(new GroupNodeAST(pNodes[args[0]]));
             break;
         default:
             break;
@@ -214,112 +215,259 @@ bool RegexAST::createASTtree()
     return true;
 }
 
+bool RegexAST::manageAlternative(std::size_t index, std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative))
+	{
+		return false;
+	}
+	processTwoArgumentOperator(
+		stackOp,
+		alternative);
+	return true;
+}
+
+bool RegexAST::manageEscapedTransition(std::size_t &index, std::stack<RegexAST::TypeOperator>& stackOp, const std::string &escapeSign)
+{
+	index++;
+	if (index < pattern.size() && escapeSign.find(pattern[index]) != std::string::npos)
+	{
+		manageTransition(index, stackOp);
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+}
+
+bool RegexAST::manageTransition(std::size_t index, std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	result.push_back({ pattern[index] });
+	operators.push_back(transition);
+	processIngredient(
+		stackOp,
+		concatenation);
+	return true;
+}
+
+bool RegexAST::manageMultiTransition(std::size_t &index, std::stack<RegexAST::TypeOperator>& stackOp, const std::string &escapeSign)
+{
+	std::set<char> characters;
+	index++;
+	bool isNegate = false;
+	if (index < pattern.size() && pattern[index] == '^')
+	{
+		isNegate = true;
+	}
+
+	while (index < pattern.size() && pattern[index] != ']')
+	{
+		const char *actualCharacter = nullptr;
+		if (pattern[index] == '\\')
+		{
+			if (pattern[index] == ']')
+			{
+				actualCharacter = &(pattern[index]);
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			actualCharacter = &(pattern[index]);
+		}
+
+		index++;
+
+		if (index < pattern.size() && pattern[index] == '-')
+		{
+			index += 1;
+			if (pattern[index] == '\\')
+			{
+				if (pattern[index] == ']')
+				{
+					actualCharacter = &(pattern[index]);
+				}
+				else
+				{
+					return false;
+				}
+				index++;
+			}
+			if (index < pattern.size())
+			{
+				if (*actualCharacter >= pattern[index])
+				{
+					return false;
+				}
+				for (char c = *actualCharacter; c <= pattern[index]; c++)
+				{
+					characters.insert(c);
+				}
+			}
+		}
+		else
+		{
+			characters.insert(*actualCharacter);
+		}
+	}
+	if (isNegate)
+	{
+		std::vector<char> negatedCharacters;
+		for (char c = 0; c <= CHAR_MAX; c++)
+		{
+			if (characters.find(c) == characters.end())
+			{
+				negatedCharacters.push_back(c);
+			}
+		}
+		if (negatedCharacters.size() == 0)
+		{
+			return false;
+		}
+		result.push_back(negatedCharacters);
+	}
+	else
+	{
+		if (characters.size() == 0)
+		{
+			return false;
+		}
+		result.push_back(std::vector<char>(characters.begin(), characters.end()));
+	}
+	operators.push_back(transition);
+	processIngredient(
+		stackOp,
+		concatenation);
+	return pattern[index] == ']';
+}
+
+bool RegexAST::manageGroupBegin(std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	processIngredient(
+		stackOp,
+		group);
+	return true;
+}
+
+bool RegexAST::manageGroupEnd(std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	while (!stackOp.empty() && operatorPrority.at(stackOp.top()) != operatorPrority.at(group))
+	{
+		if (stackOp.top() != transition)
+		{
+			operators.push_back(stackOp.top());
+		}
+		stackOp.pop();
+	}
+	if (!stackOp.empty())
+	{
+		operators.push_back(stackOp.top());
+		stackOp.pop();
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+}
+
+bool RegexAST::manageRepeation(std::size_t &index, std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
+	{
+		return false;
+	}
+	if (index + 1 < pattern.size() && pattern[index + 1] == '?')
+	{
+		index++;
+		processOneArgumentOperator(
+			lazyRepeation);
+	}
+	else
+	{
+		processOneArgumentOperator(
+			greedyRepeation);
+	}
+	return true;
+}
+
+bool RegexAST::manageOneOrZeroOperator(std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
+	{
+		return false;
+	}
+	processOneArgumentOperator(
+		zeroOrOne);
+	return true;
+}
+
+bool RegexAST::manageRepeationPlus(std::size_t &index, std::stack<RegexAST::TypeOperator>& stackOp)
+{
+	if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
+	{
+		return false;
+	}
+	if (index + 1 < pattern.size() && pattern[index + 1] == '?')
+	{
+		index++;
+		processOneArgumentOperator(
+			lazyRepeationPlus);
+	}
+	else
+	{
+		processOneArgumentOperator(
+			greedyRepeationPlus);
+	}
+	return true;
+}
+
 bool RegexAST::createPostfixRepresentation()
 {
     std::stack<RegexAST::TypeOperator> stackOp;
-    std::string escapeSign = "\\()+*?|";
+	operators.clear();
+	result.clear();
     for (std::size_t i = 0; i < pattern.size(); i++)
     {
+		bool success = true;
         switch (pattern[i])
         {
         case('|') :
-            if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative))
-            {
-                return false;
-            }
-                  processTwoArgumentOperator(
-                      stackOp,
-                      alternative);
-                  break;
+			success = manageAlternative(i, stackOp);
+            break;
         case('\\') :
-            i++;
-            if (i < pattern.size() && escapeSign.find(pattern[i]) != std::string::npos)
-            {
-                result.push_back({ pattern[i] });
-                operators.push_back(transition);
-                processIngredient(
-                    stackOp,
-                    concatenation);
-            }
-            else
-            {
-                return false;
-            }
+			success = manageEscapedTransition(i, stackOp, escapeSign);
             break;
         case('(') :
-            processIngredient(
-                stackOp,
-                group);
+			success = manageGroupBegin(stackOp);
             break;
         case(')') :
-            while (!stackOp.empty() && operatorPrority.at(stackOp.top()) != operatorPrority.at(group))
-            {
-                if (stackOp.top() != transition)
-                {
-                    operators.push_back(stackOp.top());
-                }
-                stackOp.pop();
-            }
-            if (!stackOp.empty())
-            {
-                operators.push_back(stackOp.top());
-                stackOp.pop();
-            }
-            else
-            {
-                return false;
-            }
+			success = manageGroupEnd(stackOp);
             break;
         case('*') :
-            if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
-            {
-                return false;
-            }
-                  if (i + 1 < pattern.size() && pattern[i + 1] == '?')
-                  {
-                      i++;
-                      processOneArgumentOperator(
-                          lazyRepeation);
-                  }
-                  else
-                  {
-                      processOneArgumentOperator(
-                          greedyRepeation);
-                  }
-                  break;
+			success = manageRepeation(i, stackOp);
+			break;
         case('?') :
-            if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
-            {
-                return false;
-            }
-                  processOneArgumentOperator(
-                      zeroOrOne);
-                  break;
+			success = manageOneOrZeroOperator(stackOp);
+            break;
         case('+') :
-            if (result.size() == 0 || (!stackOp.empty() && stackOp.top() == alternative) || operators.back() > alternative)
-            {
-                return false;
-            }
-                  if (i + 1 < pattern.size() && pattern[i + 1] == '?')
-                  {
-                      i++;
-                      processOneArgumentOperator(
-                          lazyRepeationPlus);
-                  }
-                  else
-                  {
-                      processOneArgumentOperator(
-                          greedyRepeationPlus);
-                  }
-                  break;
+			success = manageRepeationPlus(i, stackOp);
+            break;
+		case ('['):
+			success = manageMultiTransition(i, stackOp, escapeSign);
+			break;
         default:
-            result.push_back({ pattern[i] });
-            operators.push_back(transition);
-            processIngredient(
-                stackOp,
-                concatenation);
+			success = manageTransition(i, stackOp);
             break;
         }
+		if (success == false)
+		{
+			return false;
+		}
     }
     while (!stackOp.empty())
     {

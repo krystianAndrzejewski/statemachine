@@ -146,7 +146,7 @@ void RegularDFA::createFromBackwardInitialNfa(const NFA &nfa)
                     finalStates.insert(states.size() - 1);
                 }
             }
-            states[mapStates[mapRDFAfromNFAStates[actualSet]]]->addNextState(partOfStates.first, states.back());
+            states[mapStates[mapRDFAfromNFAStates[actualSet]]]->addNextState(partOfStates.first, mapRDFAfromNFAStates[partOfStates.second]);
         }
     } while (!setStack.empty());
     actualState = initialState;
