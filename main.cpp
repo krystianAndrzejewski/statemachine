@@ -26,6 +26,7 @@ int main(char **argc, int argv)
     nfa.linkStates(2, 1, 'a');
     nfa.linkStates(3, 2, 'c');
     nfa.linkStates(3, 2);
-    nfa.createDFA();
+	DeterministicFiniteAutomata<char>* tmp = nfa.createDFA();
+	delete tmp;
     return 0;
 }

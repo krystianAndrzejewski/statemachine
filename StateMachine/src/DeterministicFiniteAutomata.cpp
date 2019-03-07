@@ -8,7 +8,7 @@ DeterministicFiniteAutomata<T>::DeterministicFiniteAutomata(
     std::size_t size, 
     std::size_t pInitialState, 
     const std::vector<std::size_t> &pFinalStates)
-    : initialState(pInitialState), states(size)
+    : initialState(pInitialState), actualState(pInitialState), states(size)
 {
     for (std::size_t i = 0; i < size; i++)
     {
